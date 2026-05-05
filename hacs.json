@@ -2,7 +2,5 @@
   "name": "Flair",
   "render_readme": true,
   "country": "US",
-  "homeassistant": "2026.11.0b0",
-  "zip_release": true,
-  "filename": "flair.zip"
+  "homeassistant": "2026.11.0b0"
 }
