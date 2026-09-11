@@ -175,18 +175,10 @@ class HomeAwayHoldUntil(CoordinatorEntity, SensorEntity):
         else:
             return True
 
-    @property
-    def available(self) -> bool:
-        """Determine whether entity is available. 
-
-        Return true if home/away is set manually and structure
-        has a default hold duration other than next event.
-        """
-
-        if self.structure_data.attributes['hold-until']:
-            return True
-        else:
-            return False
+    # No `available` override: when no hold is active, `native_value`
+    # returns None and Hass reports the entity as `unknown`, which is
+    # correct here - not having an active hold is a normal, frequent
+    # state, not a data-fetch failure that should read `unavailable`.
 
 
 class PuckTemp(CoordinatorEntity, SensorEntity):
@@ -672,6 +664,14 @@ class PuckPressure(CoordinatorEntity, SensorEntity):
         return SensorStateClass.MEASUREMENT
 
     @property
+    def entity_registry_enabled_default(self) -> bool:
+        """Disabled by default: Flair removed pressure readings from the
+        API entirely, so this sensor has no data to report on any account.
+        """
+
+        return False
+
+    @property
     def available(self) -> bool:
         """Return true if device is available."""
 
@@ -827,6 +827,14 @@ class DuctPressure(CoordinatorEntity, SensorEntity):
         """Return the type of state class."""
 
         return SensorStateClass.MEASUREMENT
+
+    @property
+    def entity_registry_enabled_default(self) -> bool:
+        """Disabled by default: Flair removed pressure readings from the
+        API entirely, so this sensor has no data to report on any account.
+        """
+
+        return False
 
     @property
     def available(self) -> bool:
@@ -1169,19 +1177,10 @@ class HoldTempUntil(CoordinatorEntity, SensorEntity):
         else:
             return True
 
-    @property
-    def available(self) -> bool:
-        """Determine if device is available.
-
-        Return true if temp is set manually
-        and structure has a default hold duration
-        other than next event.
-        """
-
-        if self.room_data.attributes['hold-until']:
-            return True
-        else:
-            return False
+    # No `available` override: when no hold is active, `native_value`
+    # returns None and Hass reports the entity as `unknown`, which is
+    # correct here - not having an active hold is a normal, frequent
+    # state, not a data-fetch failure that should read `unavailable`.
 
 
 class LastButtonPressed(CoordinatorEntity, SensorEntity):
@@ -1947,6 +1946,14 @@ class Puck2Pressure(CoordinatorEntity, SensorEntity):
         """Return the type of state class."""
 
         return SensorStateClass.MEASUREMENT
+
+    @property
+    def entity_registry_enabled_default(self) -> bool:
+        """Disabled by default: Flair removed pressure readings from the
+        API entirely, so this sensor has no data to report on any account.
+        """
+
+        return False
 
     @property
     def available(self) -> bool:
