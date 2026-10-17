@@ -6,6 +6,26 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+Fixes from the 2026-10-17 code review.
+
+### Fixed
+- **Failed commands reported as successful**: flairaio 0.2.0 returned `None` for unrecognised error responses (HTTP 500, 401, 429...). The integration now wraps the client so every failed response raises.
+- **Wrong home controlled with multiple structures**: flairaio shared one set of device dictionaries between all structures; each structure now gets its own.
+- **Options flow crashed on HA 2026.10**, and OAuth1 → OAuth2 reauth failed on the version update. Reauth also refuses credentials already used by another Flair entry.
+- **Puck V2 resilience**: setup retries if the first Puck V2 fetch fails, new Puck V2 devices trigger a reload, removed ones go unavailable, retained data expires after 10 minutes, transport errors and null readings no longer fail the whole update.
+- **Stale entities stayed available** after a failed poll; all entities now respect coordinator health.
+- **Climate**: `set_temperature` honours `hvac_mode`; HVAC feature flags are always a mask; empty codesets no longer block climate setup; structure limits use `min_temp`/`max_temp`.
+- **Puck V2**: null set-point bounds no longer break the limit numbers; RSSI and gateway read the V2 current reading.
+- **Diagnostics** redact names, location and network identifiers.
+- **Missing-Puck repairs** are cleared when the HVAC entity is removed.
+
+### Changed
+- The **Smart Away switch** is documented correctly: it sets the HVAC policy while Away (Smart Away keeps min/max temperatures, Off Only turns HVAC off). It does not enable or disable automatic Away.
+
+---
+
 ## [0.1.1] - 2026-06-10
 
 Bugfix release following a full-project code review. No new features.
