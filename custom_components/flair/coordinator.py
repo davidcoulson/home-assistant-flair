@@ -5,7 +5,6 @@ import asyncio
 from datetime import timedelta
 import logging
 
-from flairaio import FlairClient
 from flairaio.exceptions import FlairAuthError, FlairError
 from flairaio.model import FlairData
 
@@ -26,6 +25,7 @@ from .const import (
     LOGGER,
 )
 from .model import Puck2
+from .util import FlairApiClient
 
 
 class FlairDataUpdateCoordinator(DataUpdateCoordinator):
@@ -39,7 +39,7 @@ class FlairDataUpdateCoordinator(DataUpdateCoordinator):
         scan_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
         timeout = entry.options.get(CONF_TIMEOUT, DEFAULT_TIMEOUT)
 
-        self.client = FlairClient(
+        self.client = FlairApiClient(
             entry.data[CONF_CLIENT_ID],
             entry.data[CONF_CLIENT_SECRET],
             session=async_get_clientsession(hass),
