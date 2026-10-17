@@ -67,3 +67,26 @@ def raw_puck2(pid: str, inactive: bool = False, **attributes) -> dict:
             "current-reading": {"links": {"related": f"/api/puck2s/{pid}/current-reading"}}
         },
     }
+
+
+def make_coordinator(data: FlairData):
+    """Return a mock coordinator serving data."""
+
+    from unittest.mock import AsyncMock, MagicMock
+
+    coordinator = MagicMock()
+    coordinator.data = data
+    coordinator.last_update_success = True
+    coordinator.client.update = AsyncMock()
+    coordinator.async_request_refresh = AsyncMock()
+    return coordinator
+
+
+def attach(entity, hass):
+    """Attach an entity to hass without adding it to a platform."""
+
+    from unittest.mock import MagicMock
+
+    entity.hass = hass
+    entity.async_write_ha_state = MagicMock()
+    return entity
