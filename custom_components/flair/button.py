@@ -106,6 +106,9 @@ class HomeAwayClearHold(CoordinatorEntity, ButtonEntity):
     def available(self) -> bool:
         """Marks entity as unavailable if system mode is set to Manual."""
 
+        if not super().available:
+            return False
+
         system_mode = self.structure_data.attributes['mode']
         if system_mode == 'manual':
             return False
@@ -181,6 +184,9 @@ class HomeAwayRevert(CoordinatorEntity, ButtonEntity):
     @property
     def available(self) -> bool:
         """Marks entity as unavailable if system mode is set to Manual."""
+
+        if not super().available:
+            return False
 
         system_mode = self.structure_data.attributes['mode']
         if system_mode == 'manual':
@@ -283,6 +289,9 @@ class RoomClearHold(CoordinatorEntity, ButtonEntity):
     def available(self) -> bool:
         """Marks entity as unavailable if system mode is set to Manual."""
 
+        if not super().available:
+            return False
+
         system_mode = self.structure_data.attributes['mode']
         if system_mode == 'manual':
             return False
@@ -383,6 +392,9 @@ class HVACUnitControlButton(CoordinatorEntity, ButtonEntity):
     @property
     def available(self) -> bool:
         """Return true if associated puck is available."""
+
+        if not super().available:
+            return False
 
         if self.puck_data is None:
             return False

@@ -239,6 +239,9 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
     def available(self) -> bool:
         """Marks entity as unavailable if system mode is set to Manual."""
 
+        if not super().available:
+            return False
+
         system_mode = self.structure_data.attributes['mode']
         if system_mode == 'manual':
             return False
@@ -425,6 +428,9 @@ class RoomTemp(CoordinatorEntity, ClimateEntity):
     @property
     def available(self) -> bool:
         """Return true only if room has temp reading."""
+
+        if not super().available:
+            return False
 
         system_mode = self.structure_data.attributes['mode']
         if system_mode == 'manual':
@@ -849,6 +855,9 @@ class HVAC(CoordinatorEntity, ClimateEntity):
         registry so the user gets an actionable UI nudge rather than a
         log-only warning.
         """
+
+        if not super().available:
+            return False
 
         issue_id = f"hvac_no_puck_{self.hvac_data.id}"
         if self.puck_data is None:

@@ -144,6 +144,9 @@ class FlairVent(CoordinatorEntity, CoverEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
+        if not super().available:
+            return False
+
         if not self.vent_data.attributes['inactive']:
             return True
         else:

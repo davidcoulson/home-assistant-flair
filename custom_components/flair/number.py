@@ -205,6 +205,9 @@ class TempAwayMin(CoordinatorEntity, NumberEntity):
         and system mode is set to auto
         """
 
+        if not super().available:
+            return False
+
         set_point_mode = self.structure_data.attributes['set-point-mode']
         structure_away_mode = self.structure_data.attributes['structure-away-mode']
         system_mode = self.structure_data.attributes['mode'] 
@@ -377,6 +380,9 @@ class TempAwayMax(CoordinatorEntity, NumberEntity):
         and system mode is set to auto
         """
 
+        if not super().available:
+            return False
+
         set_point_mode = self.structure_data.attributes['set-point-mode']
         structure_away_mode = self.structure_data.attributes['structure-away-mode']
         system_mode = self.structure_data.attributes['mode'] 
@@ -538,6 +544,9 @@ class PuckLowerLimit(CoordinatorEntity, NumberEntity):
     def available(self) -> bool:
         """Return true if puck is active."""
 
+        if not super().available:
+            return False
+
         if not self.puck_data.attributes['inactive']:
             return True
         else:
@@ -695,6 +704,9 @@ class PuckUpperLimit(CoordinatorEntity, NumberEntity):
     @property
     def available(self) -> bool:
         """Return true if puck is active."""
+
+        if not super().available:
+            return False
 
         if not self.puck_data.attributes['inactive']:
             return True
@@ -857,6 +869,9 @@ class TempCalibration(CoordinatorEntity, NumberEntity):
     def available(self) -> bool:
         """Return true if puck is active and offset exists."""
 
+        if not super().available:
+            return False
+
         puck_inactive = self.puck_data.attributes['inactive']
         temp_offset = self.puck_data.attributes['temperature-offset-override-c']
 
@@ -985,6 +1000,9 @@ class BridgeLED(CoordinatorEntity, NumberEntity):
     @property
     def available(self) -> bool:
         """Return true if device is available."""
+
+        if not super().available:
+            return False
 
         if not self.bridge_data.attributes['inactive']:
             return True
@@ -1130,6 +1148,9 @@ class Puck2LowerLimit(CoordinatorEntity, NumberEntity):
     @property
     def available(self) -> bool:
         """Return true if puck is active and has setpoint bounds."""
+
+        if not super().available:
+            return False
 
         if self.puck2_data.attributes['inactive']:
             return False
@@ -1280,6 +1301,9 @@ class Puck2UpperLimit(CoordinatorEntity, NumberEntity):
     def available(self) -> bool:
         """Return true if puck is active and has setpoint bounds."""
 
+        if not super().available:
+            return False
+
         if self.puck2_data.attributes['inactive']:
             return False
         return self.puck2_data.attributes.get('setpoint-bound-high') is not None
@@ -1428,6 +1452,9 @@ class Puck2TempCalibration(CoordinatorEntity, NumberEntity):
     @property
     def available(self) -> bool:
         """Return true if puck is active and offset exists."""
+
+        if not super().available:
+            return False
 
         if self.puck2_data.attributes['inactive']:
             return False

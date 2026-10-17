@@ -201,6 +201,9 @@ class PuckLock(CoordinatorEntity, SwitchEntity):
         isn't None within the Flair app.
         """
 
+        if not super().available:
+            return False
+
         puck_inactive = self.puck_data.attributes['inactive']
         puck_locked = self.puck_data.attributes['locked']
 
@@ -367,6 +370,9 @@ class Puck2Lock(CoordinatorEntity, SwitchEntity):
     def available(self) -> bool:
         """Return true if puck is active and lock setting is present."""
 
+        if not super().available:
+            return False
+
         puck_inactive = self.puck2_data.attributes['inactive']
         puck_locked = self.puck2_data.attributes.get('locked')
 
@@ -472,6 +478,9 @@ class SmartAway(CoordinatorEntity, SwitchEntity):
     @property
     def available(self) -> bool:
         """Marks entity as unavailable if system mode is set to Manual."""
+
+        if not super().available:
+            return False
 
         return self.structure_data.attributes.get('mode') != 'manual'
 
