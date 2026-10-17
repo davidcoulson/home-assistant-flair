@@ -95,7 +95,9 @@ class FlairApiClient(FlairClient):
         for device in devices.values():
             if not device.attributes['inactive']:
                 reading = await self.get_related(device, 'current-reading')
-                device.current_reading = reading['attributes']
+                device.current_reading = (
+                    reading['attributes'] if isinstance(reading, dict) else {}
+                )
             else:
                 device.current_reading = {}
         return devices

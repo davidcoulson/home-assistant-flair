@@ -868,6 +868,12 @@ class HVAC(CoordinatorEntity, ClimateEntity):
         ir.async_delete_issue(self.hass, DOMAIN, issue_id)
         return not self.puck_data.attributes['inactive']
 
+    async def async_will_remove_from_hass(self) -> None:
+        """Clear this unit's missing-Puck repair when the entity goes away."""
+
+        await super().async_will_remove_from_hass()
+        ir.async_delete_issue(self.hass, DOMAIN, f"hvac_no_puck_{self.hvac_id}")
+
     async def async_turn_off(self) -> None:
         """Turn IR HVAC unit off."""
         
