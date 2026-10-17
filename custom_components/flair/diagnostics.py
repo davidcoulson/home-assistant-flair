@@ -12,6 +12,31 @@ from .const import DOMAIN
 
 TO_REDACT = {CONF_CLIENT_ID, CONF_CLIENT_SECRET}
 
+# Household names, location and network identifiers in Flair attributes
+# and readings. IDs are kept; they are opaque and needed to follow links.
+TO_REDACT_DATA = {
+    "name",
+    "location",
+    "address",
+    "street-address",
+    "city",
+    "state",
+    "zip-code",
+    "postal-code",
+    "country",
+    "latitude",
+    "longitude",
+    "email",
+    "phone-number",
+    "first-name",
+    "last-name",
+    "connected-gateway-name",
+    "ip-address",
+    "mac-address",
+    "ssid",
+    "wifi-ssid",
+}
+
 
 async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, config_entry: ConfigEntry
@@ -75,5 +100,5 @@ async def async_get_config_entry_diagnostics(
     return {
         "config_entry": async_redact_data(config_entry.data, TO_REDACT),
         "options": config_entry.options,
-        "structures": structures,
+        "structures": async_redact_data(structures, TO_REDACT_DATA),
     }
