@@ -1130,7 +1130,9 @@ class Puck2LowerLimit(CoordinatorEntity, NumberEntity):
     def native_max_value(self) -> float:
         """Return maximum allowed lower limit."""
 
-        upper_limit = self.puck2_data.attributes.get('setpoint-bound-high', 32.0)
+        upper_limit = self.puck2_data.attributes.get('setpoint-bound-high')
+        if upper_limit is None:
+            upper_limit = 32.0
         if self.hass.config.units is METRIC_SYSTEM:
             return upper_limit
         else:
@@ -1273,7 +1275,9 @@ class Puck2UpperLimit(CoordinatorEntity, NumberEntity):
     def native_min_value(self) -> float:
         """Return minimum allowed upper limit."""
 
-        lower_limit = self.puck2_data.attributes.get('setpoint-bound-low', 10.0)
+        lower_limit = self.puck2_data.attributes.get('setpoint-bound-low')
+        if lower_limit is None:
+            lower_limit = 10.0
         if self.hass.config.units is METRIC_SYSTEM:
             return lower_limit
         else:

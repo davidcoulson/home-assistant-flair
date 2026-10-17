@@ -1483,8 +1483,16 @@ class Gateway(CoordinatorEntity, SensorEntity):
     def get_associated_gateway(self) -> str | None:
         """Determines the gateway device is using."""
 
-        connected_gateway_id = self.device_data.attributes['connected-gateway-id']
-        connected_gateway_type = self.device_data.attributes['connected-gateway-type']
+        gateway = self._gateway_from_ids()
+        if gateway is None and self.device_type == 'puck2s':
+            gateway = (self.device_data.current_reading or {}).get('connected-gateway-name')
+        return gateway
+
+    def _gateway_from_ids(self) -> str | None:
+        """Resolve the gateway from the device's connected-gateway-id."""
+
+        connected_gateway_id = self.device_data.attributes.get('connected-gateway-id')
+        connected_gateway_type = self.device_data.attributes.get('connected-gateway-type')
 
         if connected_gateway_id:
             if connected_gateway_id == self.device_data.id:
@@ -1894,7 +1902,11 @@ class Puck2RSSI(CoordinatorEntity, SensorEntity):
     def native_value(self) -> float | None:
         """Return RSSI reading."""
 
-        return self.puck2_data.attributes.get('current-rssi')
+        # V2 reports the bridge radio RSSI in its current reading.
+        rssi = (self.puck2_data.current_reading or {}).get('sub-ghz-rssi')
+        if rssi is None:
+            rssi = self.puck2_data.attributes.get('current-rssi')
+        return rssi
 
     @property
     def native_unit_of_measurement(self) -> str:
