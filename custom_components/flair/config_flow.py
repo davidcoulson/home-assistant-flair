@@ -48,7 +48,7 @@ class FlairConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> FlairOptionsFlow:
         """Return the options flow handler."""
 
-        return FlairOptionsFlow(config_entry)
+        return FlairOptionsFlow()
 
     async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> FlowResult:
         """Handle re-authentication with Flair."""
@@ -139,11 +139,6 @@ class FlairConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 class FlairOptionsFlow(config_entries.OptionsFlow):
     """Handle the options flow for the Flair integration."""
-
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        """Initialize the options flow."""
-
-        self.config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
