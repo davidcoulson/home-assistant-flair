@@ -94,6 +94,10 @@ class FlairDataUpdateCoordinator(DataUpdateCoordinator):
             except FlairAuthError as err:
                 raise ConfigEntryAuthFailed(err) from err
             except (FlairError, asyncio.TimeoutError) as err:
+                if previous_data is None:
+                    # Entities are only created at setup, so retry setup
+                    # rather than start without the Puck V2 devices.
+                    raise UpdateFailed(f'Failed to fetch puck2s: {err}') from err
                 LOGGER.warning(
                     'Failed to fetch puck2s for structure %s (%s); retaining previous data (%d puck2 device(s)): %s: %s',
                     structure_id,

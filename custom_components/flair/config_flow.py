@@ -79,9 +79,6 @@ class FlairConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 assert self.entry is not None
 
-                if self.entry.version == 1:
-                    self.entry.version = 2.1
-
                 self.hass.config_entries.async_update_entry(
                     self.entry,
                     data={
@@ -90,6 +87,8 @@ class FlairConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         CONF_CLIENT_SECRET: client_secret,
                     },
                     unique_id=client_id,
+                    # HA forbids assigning entry.version directly
+                    version=2.1 if self.entry.version == 1 else self.entry.version,
                 )
 
                 await self.hass.config_entries.async_reload(self.entry.entry_id)
