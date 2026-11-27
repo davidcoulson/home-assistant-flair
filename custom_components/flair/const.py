@@ -1,9 +1,10 @@
 """Constants for Flair"""
 
 import asyncio
+from datetime import timedelta
 import logging
 
-from aiohttp.client_exceptions import ClientConnectionError
+from aiohttp import ClientError
 from flairaio.exceptions import FlairAuthError, FlairError
 
 from homeassistant.components.climate import HVACAction, HVACMode
@@ -46,9 +47,13 @@ DEFAULT_NAME = "Flair"
 TIMEOUT = DEFAULT_TIMEOUT
 VOLTAGE_PRECISION = 2
 
+# How long Puck V2 data from a failed fetch is reused before the devices
+# are reported offline.
+PUCK2_STALE_AFTER = timedelta(minutes=10)
+
 FLAIR_ERRORS = (
     asyncio.TimeoutError,
-    ClientConnectionError,
+    ClientError,
     FlairAuthError,
     FlairError,
 )

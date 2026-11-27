@@ -253,6 +253,9 @@ class PuckTemp(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
+        if not super().available:
+            return False
+
         if not self.puck_data.attributes['inactive']:
             return True
         else:
@@ -330,6 +333,9 @@ class PuckHumidity(CoordinatorEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return true if device is available."""
+
+        if not super().available:
+            return False
 
         if not self.puck_data.attributes['inactive']:
             return True
@@ -412,6 +418,9 @@ class PuckLight(CoordinatorEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return true if device is available."""
+
+        if not super().available:
+            return False
 
         if (self.puck_data.attributes['inactive'] == False) and \
                 (self.puck_data.current_reading['light'] is not None):
@@ -504,6 +513,9 @@ class PuckVoltage(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
+        if not super().available:
+            return False
+
         if not self.puck_data.attributes['inactive']:
             return True
         else:
@@ -587,6 +599,9 @@ class PuckRSSI(CoordinatorEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return true if device is available."""
+
+        if not super().available:
+            return False
 
         if not self.puck_data.attributes['inactive']:
             return True
@@ -675,6 +690,9 @@ class PuckPressure(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
+        if not super().available:
+            return False
+
         if not self.puck_data.attributes['inactive']:
             return True
         else:
@@ -752,6 +770,9 @@ class DuctTemp(CoordinatorEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return true if device is available."""
+
+        if not super().available:
+            return False
 
         if not self.vent_data.attributes['inactive']:
             return True
@@ -839,6 +860,9 @@ class DuctPressure(CoordinatorEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return true if device is available."""
+
+        if not super().available:
+            return False
 
         if not self.vent_data.attributes['inactive']:
             return True
@@ -931,6 +955,9 @@ class VentVoltage(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
+        if not super().available:
+            return False
+
         if not self.vent_data.attributes['inactive']:
             return True
         else:
@@ -1015,6 +1042,9 @@ class VentRSSI(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
+        if not super().available:
+            return False
+
         if not self.vent_data.attributes['inactive']:
             return True
         else:
@@ -1092,6 +1122,9 @@ class VentReportedState(CoordinatorEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return true if device is available."""
+
+        if not super().available:
+            return False
 
         if not self.vent_data.attributes['inactive']:
             return True
@@ -1272,6 +1305,9 @@ class LastButtonPressed(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if associated puck is available."""
 
+        if not super().available:
+            return False
+
         if self.puck_data is None:
             return False
         return not self.puck_data.attributes['inactive']
@@ -1355,6 +1391,9 @@ class BridgeRSSI(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
+        if not super().available:
+            return False
+
         if not self.bridge_data.attributes['inactive']:
             return True
         else:
@@ -1433,6 +1472,9 @@ class Gateway(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
+        if not super().available:
+            return False
+
         if not self.device_data.attributes['inactive']:
             return True
         else:
@@ -1441,8 +1483,16 @@ class Gateway(CoordinatorEntity, SensorEntity):
     def get_associated_gateway(self) -> str | None:
         """Determines the gateway device is using."""
 
-        connected_gateway_id = self.device_data.attributes['connected-gateway-id']
-        connected_gateway_type = self.device_data.attributes['connected-gateway-type']
+        gateway = self._gateway_from_ids()
+        if gateway is None and self.device_type == 'puck2s':
+            gateway = (self.device_data.current_reading or {}).get('connected-gateway-name')
+        return gateway
+
+    def _gateway_from_ids(self) -> str | None:
+        """Resolve the gateway from the device's connected-gateway-id."""
+
+        connected_gateway_id = self.device_data.attributes.get('connected-gateway-id')
+        connected_gateway_type = self.device_data.attributes.get('connected-gateway-type')
 
         if connected_gateway_id:
             if connected_gateway_id == self.device_data.id:
@@ -1537,6 +1587,9 @@ class Puck2Temp(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
+        if not super().available:
+            return False
+
         if not self.puck2_data.attributes['inactive']:
             return True
         else:
@@ -1614,6 +1667,9 @@ class Puck2Humidity(CoordinatorEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return true if device is available."""
+
+        if not super().available:
+            return False
 
         if not self.puck2_data.attributes['inactive']:
             return True
@@ -1695,6 +1751,9 @@ class Puck2Light(CoordinatorEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return true if device is available and has light reading."""
+
+        if not super().available:
+            return False
 
         if self.puck2_data.attributes['inactive']:
             return False
@@ -1786,6 +1845,9 @@ class Puck2Voltage(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
+        if not super().available:
+            return False
+
         if not self.puck2_data.attributes['inactive']:
             return True
         else:
@@ -1840,7 +1902,11 @@ class Puck2RSSI(CoordinatorEntity, SensorEntity):
     def native_value(self) -> float | None:
         """Return RSSI reading."""
 
-        return self.puck2_data.attributes.get('current-rssi')
+        # V2 reports the bridge radio RSSI in its current reading.
+        rssi = (self.puck2_data.current_reading or {}).get('sub-ghz-rssi')
+        if rssi is None:
+            rssi = self.puck2_data.attributes.get('current-rssi')
+        return rssi
 
     @property
     def native_unit_of_measurement(self) -> str:
@@ -1869,6 +1935,9 @@ class Puck2RSSI(CoordinatorEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return true if device is available."""
+
+        if not super().available:
+            return False
 
         if not self.puck2_data.attributes['inactive']:
             return True
@@ -1958,6 +2027,9 @@ class Puck2Pressure(CoordinatorEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return true if device is available."""
+
+        if not super().available:
+            return False
 
         if not self.puck2_data.attributes['inactive']:
             return True

@@ -248,6 +248,9 @@ class HomeAwayMode(CoordinatorEntity, SelectEntity):
     def available(self) -> bool:
         """Marks entity as unavailable if system mode is set to Manual."""
 
+        if not super().available:
+            return False
+
         system_mode = self.structure_data.attributes['mode']
         if system_mode == 'manual':
             return False
@@ -375,6 +378,9 @@ class HomeAwaySetBy(CoordinatorEntity, SelectEntity):
     def available(self) -> bool:
         """Marks entity as unavailable if system mode is set to Manual."""
 
+        if not super().available:
+            return False
+
         system_mode = self.structure_data.attributes['mode']
         if system_mode == 'manual':
             return False
@@ -486,6 +492,9 @@ class DefaultHoldDuration(CoordinatorEntity, SelectEntity):
     @property
     def available(self) -> bool:
         """Marks entity as unavailable if system mode is set to Manual."""
+
+        if not super().available:
+            return False
 
         system_mode = self.structure_data.attributes['mode']
         if system_mode == 'manual':
@@ -601,6 +610,9 @@ class SetPointController(CoordinatorEntity, SelectEntity):
     @property
     def available(self) -> bool:
         """Marks entity as unavailable if system mode is set to Manual."""
+
+        if not super().available:
+            return False
 
         system_mode = self.structure_data.attributes['mode']
         if system_mode == 'manual':
@@ -722,6 +734,9 @@ class Schedule(CoordinatorEntity, SelectEntity):
     def available(self) -> bool:
         """Marks entity as unavailable if system mode is set to Manual."""
 
+        if not super().available:
+            return False
+
         system_mode = self.structure_data.attributes['mode']
         if system_mode == 'manual':
             return False
@@ -834,6 +849,9 @@ class AwayMode(CoordinatorEntity, SelectEntity):
     @property
     def available(self) -> bool:
         """Marks entity as unavailable if system mode is set to Manual."""
+
+        if not super().available:
+            return False
 
         system_mode = self.structure_data.attributes['mode']
         if system_mode == 'manual':
@@ -950,6 +968,9 @@ class RoomActivity(CoordinatorEntity, SelectEntity):
     def available(self) -> bool:
         """Marks entity as unavailable if system mode is set to Manual."""
 
+        if not super().available:
+            return False
+
         system_mode = self.structure_data.attributes['mode']
         if system_mode == 'manual':
             return False
@@ -1051,6 +1072,9 @@ class PuckBackground(CoordinatorEntity, SelectEntity):
     @property
     def available(self) -> bool:
         """Return true if puck is active."""
+
+        if not super().available:
+            return False
 
         if not self.puck_data.attributes['inactive']:
             return True
@@ -1252,6 +1276,9 @@ class Puck2Background(CoordinatorEntity, SelectEntity):
     @property
     def available(self) -> bool:
         """Return true if puck is active and has display color attribute."""
+
+        if not super().available:
+            return False
 
         if self.puck2_data.attributes['inactive']:
             return False

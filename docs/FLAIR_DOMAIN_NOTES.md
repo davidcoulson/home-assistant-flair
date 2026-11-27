@@ -94,10 +94,17 @@ When the controller is "Thermostat":
 
 Values (from `AWAY_MODES`): `"Smart Away"` | `"Off Only"`
 
-- `"Smart Away"` — Flair uses occupancy signals (geofence, schedule, etc.) to automatically enter Away.
-- `"Off Only"` — Away can only be entered manually.
+This is what Flair does with the HVAC *while the house is Away*; it does
+not control whether or how the house enters Away (see §3.5, Home/Away mode
+and its set-by source).
 
-Useful as an on/off toggle for presence automations.
+- `"Smart Away"` — while Away, Flair maintains the away minimum/maximum
+  temperatures.
+- `"Off Only"` — while Away, Flair turns heating and cooling off.
+
+To stop geolocation from switching the house to Away, change Home/Away
+"set by" (e.g. to Manual), not this attribute. See Flair's
+[Away Settings](https://support.flair.co/hc/en-us/articles/360041109111-Away-Settings).
 
 ### 3.5 Home/Away state and its setter — two separate attributes
 

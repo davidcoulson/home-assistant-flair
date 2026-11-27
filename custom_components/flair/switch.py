@@ -201,6 +201,9 @@ class PuckLock(CoordinatorEntity, SwitchEntity):
         isn't None within the Flair app.
         """
 
+        if not super().available:
+            return False
+
         puck_inactive = self.puck_data.attributes['inactive']
         puck_locked = self.puck_data.attributes['locked']
 
@@ -367,6 +370,9 @@ class Puck2Lock(CoordinatorEntity, SwitchEntity):
     def available(self) -> bool:
         """Return true if puck is active and lock setting is present."""
 
+        if not super().available:
+            return False
+
         puck_inactive = self.puck2_data.attributes['inactive']
         puck_locked = self.puck2_data.attributes.get('locked')
 
@@ -395,14 +401,15 @@ class Puck2Lock(CoordinatorEntity, SwitchEntity):
 
 
 class SmartAway(CoordinatorEntity, SwitchEntity):
-    """Switch wrapping the structure's "Smart Away" mode.
+    """Switch for the structure's away policy (structure-away-mode).
 
-    On  = "Smart Away" — Flair will auto-shift the structure to Away based
-          on app geolocation / occupancy heuristics.
-    Off = "Off Only"  — Auto-away is disabled.
+    On  = "Smart Away" — while Away, Flair keeps the house between the
+          away minimum and maximum temperatures.
+    Off = "Off Only"  — while Away, Flair turns heating/cooling off.
 
-    Mirrors the existing AwayMode select entity but as a switch, which is
-    easier to wire into Home Assistant presence automations.
+    This does not decide whether the house goes Away; that is Home/Away
+    mode and its "set by" source (e.g. Flair App Geolocation). Mirrors the
+    AwayMode select entity as a switch.
     """
 
     def __init__(self, coordinator, structure_id):
@@ -459,7 +466,7 @@ class SmartAway(CoordinatorEntity, SwitchEntity):
 
     @property
     def is_on(self) -> bool:
-        """Return true when Smart Away is enabled."""
+        """Return true when the away policy is Smart Away."""
 
         return self.structure_data.attributes.get('structure-away-mode') == 'Smart Away'
 
@@ -473,10 +480,13 @@ class SmartAway(CoordinatorEntity, SwitchEntity):
     def available(self) -> bool:
         """Marks entity as unavailable if system mode is set to Manual."""
 
+        if not super().available:
+            return False
+
         return self.structure_data.attributes.get('mode') != 'manual'
 
     async def async_turn_on(self, **kwargs) -> None:
-        """Enable Smart Away."""
+        """Set the away policy to Smart Away."""
 
         await self.coordinator.client.update(
             'structures',
@@ -489,7 +499,7 @@ class SmartAway(CoordinatorEntity, SwitchEntity):
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs) -> None:
-        """Disable Smart Away (set to Off Only)."""
+        """Set the away policy to Off Only (HVAC off while Away)."""
 
         await self.coordinator.client.update(
             'structures',

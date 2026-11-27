@@ -79,6 +79,12 @@ class FlairConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 assert self.entry is not None
 
+                # Don't let reauth move this entry onto credentials that
+                # another Flair entry already uses.
+                for other in self._async_current_entries(include_ignore=False):
+                    if other.entry_id != self.entry.entry_id and other.unique_id == client_id:
+                        return self.async_abort(reason="already_configured")
+
                 self.hass.config_entries.async_update_entry(
                     self.entry,
                     data={

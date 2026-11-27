@@ -81,8 +81,12 @@ async def async_setup_entry(
                     # Units that only use buttons return a list of constraints while more advanced return a dict
                     constraints = structure_data.hvac_units[hvac_id].attributes['constraints']
                     if isinstance(constraints, dict):
-                        codesets = structure_data.hvac_units[hvac_id].attributes['codesets'][0]
-                        if 'temperature-scale' not in constraints and 'temperature-scale' not in codesets:
+                        codesets = structure_data.hvac_units[hvac_id].attributes.get('codesets')
+                        codeset_has_scale = (
+                            isinstance(codesets, list) and len(codesets) > 0
+                            and isinstance(codesets[0], dict) and 'temperature-scale' in codesets[0]
+                        )
+                        if 'temperature-scale' not in constraints and not codeset_has_scale:
                             unit_name = structure_data.hvac_units[hvac_id].attributes['name']
                             LOGGER.error(f'''Flair HVAC Unit {unit_name} does not have a temperature scale.
                                         Contact Flair customer support to get this fixed.''')
@@ -165,7 +169,7 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
             return round(((value * (9/5)) + 32), 0)
 
     @property
-    def native_target_temperature_low(self) -> float:
+    def min_temp(self) -> float:
         """Return minimum allowed set point in celsius or fahrenheit."""
 
         if self.hass.config.units is METRIC_SYSTEM:
@@ -174,7 +178,7 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
             return 50.0
 
     @property
-    def native_target_temperature_high(self) -> float:
+    def max_temp(self) -> float:
         """Return maximum allowed set point in celsius or fahrenheit."""
 
         if self.hass.config.units is METRIC_SYSTEM:
@@ -239,6 +243,9 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
     def available(self) -> bool:
         """Marks entity as unavailable if system mode is set to Manual."""
 
+        if not super().available:
+            return False
+
         system_mode = self.structure_data.attributes['mode']
         if system_mode == 'manual':
             return False
@@ -256,16 +263,21 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
         return await self.coordinator.async_request_refresh()        
 
     async def async_set_temperature(self, **kwargs) -> None:
-        """Set new target temperature."""
+        """Set new target temperature and, if given, HVAC mode."""
 
         current_controller = self.structure_data.attributes['set-point-mode']
-        if current_controller == "Home Evenness For Active Rooms Follow Third Party":
+        if kwargs.get(ATTR_TEMPERATURE) is not None and current_controller == "Home Evenness For Active Rooms Follow Third Party":
             raise HomeAssistantError(
                 f'Cannot set target temperature for structure '
                 f'"{self.structure_data.attributes["name"]}": the set-point '
                 f'controller is currently set to Thermostat. Switch it to '
                 f'"Flair App" to control structure temperature from Home Assistant.'
             )
+
+        if (hvac_mode := kwargs.get(ATTR_HVAC_MODE)) is not None:
+            await self.async_set_hvac_mode(hvac_mode)
+        if kwargs.get(ATTR_TEMPERATURE) is None:
+            return
 
         if self.hass.config.units is METRIC_SYSTEM:
             temp = kwargs.get(ATTR_TEMPERATURE)
@@ -426,6 +438,9 @@ class RoomTemp(CoordinatorEntity, ClimateEntity):
     def available(self) -> bool:
         """Return true only if room has temp reading."""
 
+        if not super().available:
+            return False
+
         system_mode = self.structure_data.attributes['mode']
         if system_mode == 'manual':
             return False
@@ -447,6 +462,9 @@ class RoomTemp(CoordinatorEntity, ClimateEntity):
     async def async_set_temperature(self, **kwargs) -> None:
         """Set new target temperature."""
 
+        if (hvac_mode := kwargs.get(ATTR_HVAC_MODE)) is not None:
+            await self.async_set_hvac_mode(hvac_mode)
+
         temp = kwargs.get(ATTR_TEMPERATURE)
         attributes = self.set_attributes(temp, 'temperature')
 
@@ -455,8 +473,6 @@ class RoomTemp(CoordinatorEntity, ClimateEntity):
             self.room_data.attributes['set-point-c'] = temp
             self.async_write_ha_state()
             return await self.coordinator.async_request_refresh()
-        else:
-            LOGGER.error(f'Missing valid arguments for set_temperature in {kwargs}')
 
     async def async_set_hvac_mode(self, hvac_mode) -> None:
         """Set new target hvac mode."""
@@ -787,59 +803,23 @@ class HVAC(CoordinatorEntity, ClimateEntity):
     def supported_features(self) -> int:
         """HVAC unit supported features."""
 
-        if self.swing_available and self.available_fan_speeds:
-            # Determine if Flair structure is set to auto mode.
-            if self.structure_mode == 'auto':
-                if self.is_on:
-                    # Only allow setting swing and fan if HVAC is in dry or fan only mode.
-                    if self.hvac_mode in (HVACMode.DRY, HVACMode.FAN_ONLY):
-                        return ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE
-                    else:
-                        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE
-                else:
-                    return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE
-            if self.structure_mode == 'manual':
-                if self.is_on:
-                    if self.hvac_mode in (HVACMode.DRY, HVACMode.FAN_ONLY):
-                        return ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF
-                    else:
-                        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF
-                else:
-                    return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.TURN_ON
-
-        # If only swing is available.
+        features = ClimateEntityFeature(0)
         if self.swing_available:
-            if self.structure_mode == 'auto':
-                if self.is_on:
-                    if self.hvac_mode in (HVACMode.DRY, HVACMode.FAN_ONLY):
-                        return ClimateEntityFeature.SWING_MODE
-                    else:
-                        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE
-            if self.structure_mode == 'manual':
-                if self.is_on:
-                    if self.hvac_mode in (HVACMode.DRY, HVACMode.FAN_ONLY):
-                        return ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF
-                    else:
-                        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF
-                else:
-                    return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.TURN_ON
-
-        # If only fan speeds are available.
+            features |= ClimateEntityFeature.SWING_MODE
         if self.available_fan_speeds:
-            if self.structure_mode == 'auto':
-                if self.is_on:
-                    if self.hvac_mode in (HVACMode.DRY, HVACMode.FAN_ONLY):
-                        return ClimateEntityFeature.FAN_MODE
-                    else:
-                        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE
-            if self.structure_mode == 'manual':
-                if self.is_on:
-                    if self.hvac_mode in (HVACMode.DRY, HVACMode.FAN_ONLY):
-                        return ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF
-                    else:
-                        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF
-                else:
-                    return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.TURN_ON
+            features |= ClimateEntityFeature.FAN_MODE
+
+        # Manually controlled units can be powered on and off. When off,
+        # only the set point and power on are offered.
+        if self.structure_mode == 'manual':
+            if not self.is_on:
+                return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.TURN_ON
+            features |= ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF
+
+        # Only swing and fan can be set in dry or fan only mode.
+        if not (self.is_on and self.hvac_mode in (HVACMode.DRY, HVACMode.FAN_ONLY)):
+            features |= ClimateEntityFeature.TARGET_TEMPERATURE
+        return features
 
     @property
     def available(self) -> bool:
@@ -849,6 +829,9 @@ class HVAC(CoordinatorEntity, ClimateEntity):
         registry so the user gets an actionable UI nudge rather than a
         log-only warning.
         """
+
+        if not super().available:
+            return False
 
         issue_id = f"hvac_no_puck_{self.hvac_data.id}"
         if self.puck_data is None:
@@ -867,6 +850,12 @@ class HVAC(CoordinatorEntity, ClimateEntity):
 
         ir.async_delete_issue(self.hass, DOMAIN, issue_id)
         return not self.puck_data.attributes['inactive']
+
+    async def async_will_remove_from_hass(self) -> None:
+        """Clear this unit's missing-Puck repair when the entity goes away."""
+
+        await super().async_will_remove_from_hass()
+        ir.async_delete_issue(self.hass, DOMAIN, f"hvac_no_puck_{self.hvac_id}")
 
     async def async_turn_off(self) -> None:
         """Turn IR HVAC unit off."""
@@ -898,6 +887,8 @@ class HVAC(CoordinatorEntity, ClimateEntity):
                 await self.async_set_hvac_mode(hvac_mode)
 
         temp = kwargs.get(ATTR_TEMPERATURE)
+        if temp is None:
+            return
 
         # Get room ID if in auto mode or HVAC ID if in manual mode.
         if self.structure_mode == 'auto':
