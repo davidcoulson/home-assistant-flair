@@ -10,6 +10,7 @@ from homeassistant.const import CONF_CLIENT_ID
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.service import async_register_admin_service
 from homeassistant.loader import BASE_PRELOAD_PLATFORMS
 
@@ -141,5 +142,16 @@ def _register_reload_code(hass: HomeAssistant) -> None:
             raise HomeAssistantError(
                 f"{DOMAIN} did not set up again for {failed}; see the log"
             )
+        _clear_marketplace_restart(hass)
 
     async_register_admin_service(hass, DOMAIN, "reload_code", _reload_code)
+
+
+def _clear_marketplace_restart(hass) -> None:
+    """Drop Marketplace's "restart to finish the update" repairs for Flair.
+
+    Marketplace cannot see reload_code, so they would stay until a restart.
+    """
+    for (domain, issue_id), issue in list(ir.async_get(hass).issues.items()):
+        if domain == "marketplace" and issue_id.startswith("restart_required_") and issue.issue_domain == DOMAIN:
+            ir.async_delete_issue(hass, domain, issue_id)
