@@ -3,13 +3,16 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
+import json
 import sys
+from pathlib import Path
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_CLIENT_ID
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.service import async_register_admin_service
 from homeassistant.loader import BASE_PRELOAD_PLATFORMS
 
@@ -30,6 +33,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     _register_reload_code(hass)
 
+    _clear_marketplace_restart(hass)
     return True
 
 
@@ -143,3 +147,22 @@ def _register_reload_code(hass: HomeAssistant) -> None:
             )
 
     async_register_admin_service(hass, DOMAIN, "reload_code", _reload_code)
+
+
+_CODE_VERSION = json.loads((Path(__file__).parent / "manifest.json").read_text())["version"]
+
+
+def _clear_marketplace_restart(hass) -> None:
+    """Drop Marketplace's "restart to finish the update" repair for the running Flair version.
+
+    Called from entry setup, so it uses the new code's version even when the old handler did
+    the reload; a repair for any other version still waits.
+    """
+    for (domain, issue_id), issue in list(ir.async_get(hass).issues.items()):
+        if (
+            domain == "marketplace"
+            and issue_id.startswith("restart_required_")
+            and issue.issue_domain == DOMAIN
+            and issue_id.rsplit("/", 1)[-1].removeprefix("v") == _CODE_VERSION
+        ):
+            ir.async_delete_issue(hass, domain, issue_id)
